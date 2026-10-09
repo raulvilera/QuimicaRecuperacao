@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recuperação de Química – 3º Bimestre – 2ª Série C</title>
+<style>
+:root{--verde:#145A32;--verde2:#1e7a46;--fundo:#e9edf0;--card:#fff;--texto:#1d2a33;--borda:#c9d2d9}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",Roboto,Arial,sans-serif;background:var(--fundo);color:var(--texto);line-height:1.5}
+header.escola{background:var(--verde);color:#fff;text-align:center;padding:18px 16px}
+header.escola h1{margin:0;font-size:1.25rem;letter-spacing:.5px}
+header.escola p{margin:4px 0 0;font-size:.95rem;opacity:.9}
+main{max-width:860px;margin:0 auto;padding:16px}
+.card{background:var(--card);border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid .full{grid-column:1/-1}
+label{display:block;font-weight:600;font-size:.85rem;margin-bottom:3px}
+select,input[type=text],textarea{width:100%;padding:10px;border:1px solid var(--borda);border-radius:8px;font:inherit;background:#fff}
+input[readonly]{background:#f1f4f6;color:#44525d}
+textarea{min-height:130px;resize:vertical}
+.q h2{margin:0 0 8px;font-size:1.05rem;color:var(--verde)}
+.q .tipo{font-size:.75rem;font-weight:700;background:#e3f1e9;color:var(--verde);padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:middle}
+.q p.enun{margin:0 0 10px}
+figure{margin:10px 0 14px;text-align:center}
+figure svg{max-width:100%;height:auto;background:#fafcfd;border:1px solid var(--borda);border-radius:10px}
+figcaption{font-size:.78rem;color:#5a6a76;margin-top:4px}
+.alt{display:flex;gap:10px;align-items:flex-start;padding:11px 14px;margin:10px 0;border-radius:10px;background:#eef1f4;cursor:pointer;user-select:none;
+ box-shadow:4px 4px 8px rgba(0,0,0,.3),-2px -2px 6px rgba(255,255,255,.7);transition:all .15s ease-in-out}
+.alt:hover{background:#e4e9ee}
+.alt .letra{font-weight:700;min-width:1.4em}
+.alt.selecionada{box-shadow:inset 3px 3px 6px rgba(0,0,0,.45);transform:translateY(2px);background:#145A32;color:#fff;font-weight:700}
+.alt:focus-visible{outline:3px solid #f0b400}
+.rubrica{font-size:.78rem;color:#5a6a76;margin-top:4px}
+#progresso{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid var(--borda);padding:8px 16px;text-align:center;font-size:.85rem}
+button.enviar{display:block;width:100%;padding:14px;font-size:1.05rem;font-weight:700;border:0;border-radius:12px;background:var(--verde);color:#fff;cursor:pointer;
+ box-shadow:4px 4px 8px rgba(0,0,0,.3)}
+button.enviar:disabled{opacity:.5;cursor:not-allowed}
+#msg{margin-top:12px;padding:12px;border-radius:10px;display:none;font-weight:600}
+#msg.ok{display:block;background:#d9f0e2;color:#0d4026}
+#msg.erro{display:block;background:#fbdcdc;color:#7a1212}
+@media(max-width:560px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="escola">
+  <h1>E.E. PROFª WANDA MASCAGNI DE SÁ</h1>
+  <p>Recuperação de Química – 3º Bimestre – 2ª Série do Ensino Médio</p>
+</header>
+<div id="progresso">Respondidas: <b id="cont">0</b> / 10</div>
+<main>
+  <section class="card">
+    <div class="grid">
+      <div><label for="turma">TURMA</label>
+        <select id="turma"><option value="">Selecione a turma…</option></select></div>
+      <div><label for="nome">NOME</label>
+        <select id="nome" disabled><option value="">Selecione primeiro a turma…</option></select></div>
+      <div><label for="num">Nº DE CHAMADA</label><input type="text" id="num" readonly></div>
+      <div><label for="ra">RA</label><input type="text" id="ra" readonly></div>
+      <div class="full"><label for="email">E-MAIL INSTITUCIONAL</label><input type="text" id="email" readonly></div>
+    </div>
+  </section>
+  <div id="questoes"></div>
+  <button class="enviar" id="btn">ENVIAR RESPOSTAS</button>
+  <div id="msg" role="status"></div>
+</main>
+ 
+<script>
+/* ====== CONFIGURAÇÃO ====== */
+// Cole aqui a URL do Web App gerada pelo Google Apps Script (termina em /exec)
+const URL_APPS_SCRIPT = "COLE_AQUI_A_URL_DO_WEB_APP";
+ 
+/* ====== FONTE DE DADOS: ALUNOS (extraída da planilha "2ª Série C") ====== */
+const TURMAS = { "2ª Série C": [{"n": 1, "nome": "ANA CLARA FERNANDES DA SILVA", "ra": "112733688", "dig": "5", "email": "00001127336885SP@al.educacao.sp.gov.br"}, {"n": 2, "nome": "BARBARA VITÓRIA SANTOS SOUZA", "ra": "112229643", "dig": "5", "email": "00001122296435SP@al.educacao.sp.gov.br"}, {"n": 3, "nome": "GABRIEL FREITAS DE BARROS", "ra": "112226824", "dig": "5", "email": "00001122268245SP@al.educacao.sp.gov.br"}, {"n": 4, "nome": "GUILHERME XAVIER DE MACÊDO", "ra": "114147486", "dig": "4", "email": "00001141474864SP@al.educacao.sp.gov.br"}, {"n": 5, "nome": "JAQUELINE LEMOS CUNHA DE AMORIM", "ra": "115107760", "dig": "4", "email": "00001151077604SP@al.educacao.sp.gov.br"}, {"n": 6, "nome": "JEFFERSON DAVID BARBOZA ELIAS", "ra": "113205245", "dig": "2", "email": "00001132052452SP@al.educacao.sp.gov.br"}, {"n": 7, "nome": "KAIQUE SORACE MOTA SILVA", "ra": "113153420", "dig": "7", "email": "00001131534207SP@al.educacao.sp.gov.br"}, {"n": 8, "nome": "LUANA DA SILVA ROCHA DOS SANTOS", "ra": "113211690", "dig": "9", "email": "00001132116909SP@al.educacao.sp.gov.br"}, {"n": 9, "nome": "LUIZA AVELA ORTEGA", "ra": "112228678", "dig": "8", "email": "00001122286788SP@al.educacao.sp.gov.br"}, {"n": 10, "nome": "MIRELA DE OLIVEIRA MARTINS", "ra": "112221629", "dig": "4", "email": "00001122216294SP@al.educacao.sp.gov.br"}, {"n": 11, "nome": "ALICIA KEMILLY SULINO REIS", "ra": "110496463", "dig": "6", "email": "00001104964636SP@al.educacao.sp.gov.br"}, {"n": 12, "nome": "MARIAH EDUARDA PEDROSO MARTINS", "ra": "112216902", "dig": "4", "email": "00001122169024SP@al.educacao.sp.gov.br"}, {"n": 13, "nome": "HELIO HENRIQUE LAMBERT VIEIRA", "ra": "114162451", "dig": "5", "email": "00001141624515SP@al.educacao.sp.gov.br"}, {"n": 14, "nome": "PEDRO HENRIQUE VITORINO TOMAZ DOS SANTOS", "ra": "113206613", "dig": "X", "email": "0000113206613XSP@al.educacao.sp.gov.br"}, {"n": 15, "nome": "MARCOS VINICIUS DE SOUZA ALVES", "ra": "114239845", "dig": "6", "email": "00001142398456SP@al.educacao.sp.gov.br"}, {"n": 16, "nome": "GUILHERME FAGUNDES DE ARAUJO", "ra": "111895869", "dig": "X", "email": "0000111895869XSP@al.educacao.sp.gov.br"}, {"n": 17, "nome": "LARA BARROS DA SILVA", "ra": "111931694", "dig": "7", "email": "00001119316947SP@al.educacao.sp.gov.br"}, {"n": 19, "nome": "MATHEUS FELIPE SILVA SOUZA", "ra": "111717661", "dig": "7", "email": "00001117176617SP@al.educacao.sp.gov.br"}, {"n": 20, "nome": "PEDRO HENRIQUE CORDEIRO MACEDO", "ra": "116598301", "dig": "1", "email": "00001165983011SP@al.educacao.sp.gov.br"}, {"n": 22, "nome": "ANA BEATRIZ OLIVEIRA ALVES", "ra": "115107050", "dig": "6", "email": "00001151070506SP@al.educacao.sp.gov.br"}, {"n": 23, "nome": "ARTHUR RIBEIRO SOARES LUZ", "ra": "115556623", "dig": "3", "email": "00001155566233SP@al.educacao.sp.gov.br"}, {"n": 24, "nome": "SAMUEL RIBEIRO SOARES LUZ", "ra": "115556771", "dig": "7", "email": "00001155567717SP@al.educacao.sp.gov.br"}, {"n": 25, "nome": "PEDRO HENRIQUE BARRETO REGIS", "ra": "112212951", "dig": "8", "email": "00001122129518SP@al.educacao.sp.gov.br"}, {"n": 27, "nome": "ANDRÉ RICARDO BUENO EMILIO FILHO", "ra": "114145951", "dig": "6", "email": "00001141459516SP@al.educacao.sp.gov.br"}, {"n": 28, "nome": "GIOVANNA SOUZA DE ALBUQUERQUE", "ra": "115546312", "dig": "2", "email": "00001155463122SP@al.educacao.sp.gov.br"}, {"n": 29, "nome": "PABLO VINICIUS SILVA DE LIMA", "ra": "113208199", "dig": "3", "email": "00001132081993SP@al.educacao.sp.gov.br"}, {"n": 30, "nome": "DESIREE RODRIGUES DE AMORIM", "ra": "112117613", "dig": "6", "email": "00001121176136SP@al.educacao.sp.gov.br"}, {"n": 31, "nome": "MARIANA LOPES GRAÇA", "ra": "112025243", "dig": "X", "email": "0000112025243XSP@al.educacao.sp.gov.br"}, {"n": 32, "nome": "VITOR DORICE DOS SANTOS", "ra": "114157198", "dig": "5", "email": "00001141571985SP@al.educacao.sp.gov.br"}, {"n": 33, "nome": "INARA BEZERRA DA SILVA", "ra": "110498121", "dig": "X", "email": "0000110498121XSP@al.educacao.sp.gov.br"}, {"n": 34, "nome": "ASHELEY DE PAULA PEREIRA GARCIA", "ra": "112216890", "dig": "1", "email": "00001122168901SP@al.educacao.sp.gov.br"}, {"n": 36, "nome": "LAIS MIKAELLY ROCHA SILVA", "ra": "114156896", "dig": "2", "email": "00001141568962SP@al.educacao.sp.gov.br"}, {"n": 37, "nome": "YASMIN VITORIA SIQUEIRA FERNANDES", "ra": "112228037", "dig": "3", "email": "00001122280373SP@al.educacao.sp.gov.br"}, {"n": 38, "nome": "PEDRO PAULO DE SOUZA NEVES", "ra": "111931821", "dig": "X", "email": "0000111931821XSP@al.educacao.sp.gov.br"}, {"n": 39, "nome": "ISABELLA DE SOUZA BARROS", "ra": "114727075", "dig": "2", "email": "00001147270752SP@al.educacao.sp.gov.br"}, {"n": 40, "nome": "MARIA EDUARDA CHAGAS GONÇALVES", "ra": "112216421", "dig": "X", "email": "0000112216421XSP@al.educacao.sp.gov.br"}, {"n": 41, "nome": "CARLOS EDUARDO DE FREITAS PINHEIRO LOPES", "ra": "113358030", "dig": "0", "email": "00001133580300SP@al.educacao.sp.gov.br"}, {"n": 42, "nome": "LUCAS PERES DE SOUZA", "ra": "111126924", "dig": "5", "email": "00001111269245SP@al.educacao.sp.gov.br"}, {"n": 43, "nome": "ERIK TAVARES AUGUSTO", "ra": "110062207", "dig": "X", "email": "0000110062207XSP@al.educacao.sp.gov.br"}, {"n": 44, "nome": "DAVÍ ALMEIDA LIMA", "ra": "113204173", "dig": "9", "email": "00001132041739SP@al.educacao.sp.gov.br"}] };
+ 
+/* ====== FIGURAS (SVG) ====== */
+const F = (w,h,t,body)=>`<svg viewBox="0 0 ${w} ${h}" width="${w}" role="img" aria-label="${t}" font-family="Segoe UI,Arial,sans-serif" font-size="13">${body}</svg>`;
+const arrowDef=`<defs><marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#222"/></marker></defs>`;
+ 
+const FIG = {
+1: F(500,270,"Diagrama de entalpia da combustão do etanol",arrowDef+`
+ <line x1="60" y1="15" x2="60" y2="240" stroke="#222" stroke-width="2" marker-end="url(#ar)"/>
+ <text x="14" y="130" transform="rotate(-90 14,130)" text-anchor="middle">Entalpia (H)</text>
+ <line x1="60" y1="240" x2="480" y2="240" stroke="#222" stroke-width="2"/>
+ <text x="270" y="262" text-anchor="middle">Caminho da reação</text>
+ <line x1="90" y1="55" x2="200" y2="55" stroke="#c0392b" stroke-width="4"/>
+ <text x="145" y="40" text-anchor="middle" font-weight="700">C₂H₅OH + 3 O₂</text>
+ <path d="M200,55 C240,55 250,30 285,30 C320,30 330,190 370,190" fill="none" stroke="#555" stroke-dasharray="5,4"/>
+ <line x1="370" y1="190" x2="480" y2="190" stroke="#2471a3" stroke-width="4"/>
+ <text x="425" y="178" text-anchor="middle" font-weight="700">2 CO₂ + 3 H₂O</text>
+ <line x1="440" y1="58" x2="440" y2="185" stroke="#222" stroke-width="2" marker-end="url(#ar)"/>
+ <text x="433" y="125" text-anchor="end" font-weight="700">ΔH = −1367 kJ/mol</text>`),
+2: F(500,270,"Gráfico da temperatura de uma bolsa instantânea de gelo",`
+ <line x1="60" y1="15" x2="60" y2="230" stroke="#222" stroke-width="2"/><line x1="60" y1="230" x2="480" y2="230" stroke="#222" stroke-width="2"/>
+ <g font-size="11" fill="#444"><text x="52" y="45" text-anchor="end">25</text><text x="52" y="105" text-anchor="end">20</text><text x="52" y="165" text-anchor="end">10</text><text x="52" y="225" text-anchor="end">5</text></g>
+ <text x="12" y="125" transform="rotate(-90 12,125)" text-anchor="middle">Temperatura (°C)</text>
+ <text x="270" y="258" text-anchor="middle">Tempo (s)</text>
+ <g font-size="11" fill="#444"><text x="60" y="246" text-anchor="middle">0</text><text x="200" y="246" text-anchor="middle">30</text><text x="320" y="246" text-anchor="middle">60</text><text x="460" y="246" text-anchor="middle">120</text></g>
+ <polyline points="60,45 120,110 200,180 320,215 400,200 460,175" fill="none" stroke="#2471a3" stroke-width="3"/>
+ <line x1="60" y1="45" x2="120" y2="45" stroke="#999" stroke-dasharray="4,3"/>
+ <text x="250" y="40">Nitrato de amônio (NH₄NO₃) dissolvido</text><text x="250" y="57">em água no interior da bolsa</text>`),
+3: F(500,280,"Concentração em função do tempo para a reação A em B",`
+ <line x1="60" y1="15" x2="60" y2="230" stroke="#222" stroke-width="2"/><line x1="60" y1="230" x2="480" y2="230" stroke="#222" stroke-width="2"/>
+ <text x="12" y="125" transform="rotate(-90 12,125)" text-anchor="middle">Concentração (mol/L)</text>
+ <text x="270" y="270" text-anchor="middle">Tempo (min)</text>
+ <g font-size="11" fill="#444"><text x="52" y="45" text-anchor="end">1,0</text><text x="52" y="140" text-anchor="end">0,5</text><text x="52" y="233" text-anchor="end">0</text>
+ <text x="60" y="246" text-anchor="middle">0</text><text x="155" y="246" text-anchor="middle">2</text><text x="250" y="246" text-anchor="middle">3</text><text x="345" y="246" text-anchor="middle">4</text><text x="440" y="246" text-anchor="middle">6</text></g>
+ <polyline points="60,45 155,120 250,140 345,190 440,230" fill="none" stroke="#c0392b" stroke-width="3"/>
+ <polyline points="60,230 155,155 250,140 345,90 440,45 480,45" fill="none" stroke="#2471a3" stroke-width="3"/>
+ <text x="75" y="38" fill="#c0392b" font-weight="700">Curva 1</text><text x="400" y="38" fill="#2471a3" font-weight="700">Curva 2</text>
+ <text x="270" y="22" text-anchor="middle" font-weight="700">A → B</text>`),
+4: F(500,290,"Gráfico de barras com a energia liberada por grama de combustível",`
+ <line x1="60" y1="15" x2="60" y2="230" stroke="#222" stroke-width="2"/><line x1="60" y1="230" x2="490" y2="230" stroke="#222" stroke-width="2"/>
+ <text x="12" y="125" transform="rotate(-90 12,125)" text-anchor="middle">Energia liberada (kJ/g)</text>
+ <g font-size="11" fill="#444"><text x="52" y="233" text-anchor="end">0</text><text x="52" y="178" text-anchor="end">30</text><text x="52" y="123" text-anchor="end">60</text><text x="52" y="68" text-anchor="end">90</text><text x="52" y="30" text-anchor="end">120</text></g>
+ <g fill="#2e86c1"><rect x="80" y="27" width="55" height="203"/><rect x="160" y="147" width="55" height="83" fill="#8e44ad"/><rect x="240" y="152" width="55" height="78" fill="#c0392b"/><rect x="320" y="179" width="55" height="51" fill="#d68910"/><rect x="400" y="189" width="55" height="41" fill="#555"/></g>
+ <g font-size="12" text-anchor="middle" font-weight="700"><text x="107" y="21">120</text><text x="187" y="141">50</text><text x="267" y="146">46</text><text x="347" y="173">30</text><text x="427" y="183">24</text></g>
+ <g font-size="12" text-anchor="middle"><text x="107" y="248">Hidrogênio</text><text x="187" y="248">Metano</text><text x="267" y="248">Gasolina</text><text x="347" y="248">Etanol</text><text x="427" y="248">Carvão</text></g>
+ <text x="270" y="275" text-anchor="middle" font-size="11" fill="#555">Valores aproximados para fins didáticos</text>`),
+5: F(500,290,"Tempo de dissolução de comprimidos efervescentes em três condições",`
+ <g font-size="12"><rect x="20" y="10" width="460" height="80" rx="8" fill="#f3f6f8" stroke="#c9d2d9"/>
+ <text x="35" y="32" font-weight="700">Experimento A:</text><text x="150" y="32">comprimido inteiro, água a 25 °C</text>
+ <text x="35" y="54" font-weight="700">Experimento B:</text><text x="150" y="54">comprimido triturado, água a 25 °C</text>
+ <text x="35" y="76" font-weight="700">Experimento C:</text><text x="150" y="76">comprimido inteiro, água a 50 °C</text></g>
+ <line x1="70" y1="105" x2="70" y2="245" stroke="#222" stroke-width="2"/><line x1="70" y1="245" x2="480" y2="245" stroke="#222" stroke-width="2"/>
+ <text x="14" y="175" transform="rotate(-90 14,175)" text-anchor="middle">Tempo até dissolver (s)</text>
+ <g fill="#2e86c1"><rect x="110" y="125" width="70" height="120" fill="#7f8c8d"/><rect x="230" y="205" width="70" height="40" fill="#27ae60"/><rect x="350" y="195" width="70" height="50" fill="#e67e22"/></g>
+ <g font-size="13" font-weight="700" text-anchor="middle"><text x="145" y="119">120 s</text><text x="265" y="199">40 s</text><text x="385" y="189">50 s</text>
+ <text x="145" y="263">A</text><text x="265" y="263">B</text><text x="385" y="263">C</text></g>`),
+6: F(500,290,"Diagrama de entalpia: carbono, monóxido de carbono e dióxido de carbono",arrowDef+`
+ <line x1="50" y1="15" x2="50" y2="270" stroke="#222" stroke-width="2" marker-end="url(#ar)"/><text x="12" y="140" transform="rotate(-90 12,140)" text-anchor="middle">Entalpia (H)</text>
+ <line x1="80" y1="40" x2="230" y2="40" stroke="#c0392b" stroke-width="4"/><text x="155" y="30" text-anchor="middle" font-weight="700">C(grafite) + O₂(g)</text>
+ <line x1="80" y1="120" x2="230" y2="120" stroke="#8e44ad" stroke-width="4"/><text x="155" y="110" text-anchor="middle" font-weight="700">CO(g) + ½ O₂(g)</text>
+ <line x1="80" y1="240" x2="230" y2="240" stroke="#2471a3" stroke-width="4"/><text x="155" y="262" text-anchor="middle" font-weight="700">CO₂(g)</text>
+ <line x1="280" y1="44" x2="280" y2="236" stroke="#222" stroke-width="2" marker-end="url(#ar)"/><text x="292" y="145">ΔH₁ = −394 kJ</text><text x="292" y="162" font-size="11" fill="#555">C + O₂ → CO₂</text>
+ <line x1="400" y1="124" x2="400" y2="236" stroke="#222" stroke-width="2" marker-end="url(#ar)"/><text x="412" y="175">ΔH₂ = −283 kJ</text><text x="412" y="192" font-size="11" fill="#555">CO + ½O₂ → CO₂</text>
+ <line x1="170" y1="44" x2="170" y2="116" stroke="#222" stroke-width="2" stroke-dasharray="5,4" marker-end="url(#ar)"/><text x="182" y="85" font-weight="700" fill="#c0392b">ΔH₃ = ?</text>`),
+7: F(500,260,"Tabela de energias de ligação e esquema da reação entre H₂ e Cl₂",`
+ <text x="250" y="24" text-anchor="middle" font-weight="700" font-size="15">H₂(g) + Cl₂(g) → 2 HCl(g)</text>
+ <g font-size="13"><rect x="90" y="45" width="320" height="30" fill="#145A32"/><text x="180" y="65" fill="#fff" text-anchor="middle" font-weight="700">Ligação</text><text x="340" y="65" fill="#fff" text-anchor="middle" font-weight="700">Energia (kJ/mol)</text>
+ <rect x="90" y="75" width="320" height="30" fill="#eef1f4"/><text x="180" y="95" text-anchor="middle">H – H</text><text x="340" y="95" text-anchor="middle">436</text>
+ <rect x="90" y="105" width="320" height="30" fill="#fff" stroke="#eef1f4"/><text x="180" y="125" text-anchor="middle">Cl – Cl</text><text x="340" y="125" text-anchor="middle">243</text>
+ <rect x="90" y="135" width="320" height="30" fill="#eef1f4"/><text x="180" y="155" text-anchor="middle">H – Cl</text><text x="340" y="155" text-anchor="middle">431</text></g>
+ <text x="250" y="195" text-anchor="middle" font-size="12" fill="#444">Energia de ligação: energia necessária para romper 1 mol de ligações (gasosas)</text>
+ <text x="250" y="218" text-anchor="middle" font-size="12" fill="#444">H–H  +  Cl–Cl   →   2 (H–Cl)</text>`),
+8: F(500,270,"Tempo para o leite estragar em função da temperatura de armazenamento",`
+ <line x1="60" y1="15" x2="60" y2="225" stroke="#222" stroke-width="2"/><line x1="60" y1="225" x2="480" y2="225" stroke="#222" stroke-width="2"/>
+ <text x="12" y="120" transform="rotate(-90 12,120)" text-anchor="middle">Tempo até estragar (dias)</text>
+ <g font-size="11" fill="#444"><text x="52" y="228" text-anchor="end">0</text><text x="52" y="153" text-anchor="end">3</text><text x="52" y="78" text-anchor="end">6</text></g>
+ <g><rect x="100" y="20" width="70" height="205" fill="#2e86c1"/><rect x="230" y="190" width="70" height="35" fill="#e67e22"/><rect x="360" y="212" width="70" height="13" fill="#c0392b"/></g>
+ <g font-size="13" font-weight="700" text-anchor="middle"><text x="135" y="14">≈ 7 dias</text><text x="265" y="184">≈ 1 dia</text><text x="395" y="206">≈ 12 h</text></g>
+ <g font-size="13" text-anchor="middle"><text x="135" y="245">Geladeira 5 °C</text><text x="265" y="245">Ambiente 25 °C</text><text x="395" y="245">Carro quente 40 °C</text></g>`),
+9: F(500,270,"Perfil de energia da reação 2 CO + O₂ → 2 CO₂ com e sem catalisador",arrowDef+`
+ <line x1="55" y1="15" x2="55" y2="235" stroke="#222" stroke-width="2" marker-end="url(#ar)"/><text x="14" y="125" transform="rotate(-90 14,125)" text-anchor="middle">Energia</text>
+ <line x1="55" y1="235" x2="485" y2="235" stroke="#222" stroke-width="2"/><text x="270" y="260" text-anchor="middle">Caminho da reação</text>
+ <line x1="70" y1="110" x2="160" y2="110" stroke="#222" stroke-width="4"/><text x="115" y="102" text-anchor="middle" font-weight="700">2 CO + O₂</text>
+ <line x1="380" y1="190" x2="470" y2="190" stroke="#222" stroke-width="4"/><text x="425" y="182" text-anchor="middle" font-weight="700">2 CO₂</text>
+ <path d="M160,110 C200,110 210,30 270,30 C330,30 340,190 380,190" fill="none" stroke="#c0392b" stroke-width="3"/>
+ <path d="M160,110 C200,110 215,70 270,70 C325,70 340,190 380,190" fill="none" stroke="#27ae60" stroke-width="3" stroke-dasharray="7,4"/>
+ <text x="330" y="45" fill="#c0392b" font-weight="700">sem catalisador</text><text x="310" y="85" fill="#27ae60" font-weight="700">com catalisador</text>
+ <line x1="120" y1="110" x2="120" y2="30" stroke="#999" stroke-dasharray="3,3"/>`),
+10: F(500,300,"Comparação de energia por grama e emissão de CO₂ por MJ entre combustíveis",`
+ <g font-size="13" font-weight="700"><rect x="30" y="12" width="440" height="30" fill="#145A32"/>
+ <text x="120" y="32" fill="#fff" text-anchor="middle">Combustível</text><text x="290" y="32" fill="#fff" text-anchor="middle">Energia (kJ/g)</text><text x="410" y="32" fill="#fff" text-anchor="middle">CO₂ (g/MJ)*</text></g>
+ <g font-size="13" text-anchor="middle">
+ <rect x="30" y="42" width="440" height="34" fill="#eef1f4"/><text x="120" y="64">Gasolina (fóssil)</text><text x="290" y="64">46</text><text x="410" y="64">≈ 73</text>
+ <rect x="30" y="76" width="440" height="34" fill="#fff" stroke="#eef1f4"/><text x="120" y="98">Etanol (cana-de-açúcar)</text><text x="290" y="98">30</text><text x="410" y="98">≈ 20</text>
+ <rect x="30" y="110" width="440" height="34" fill="#eef1f4"/><text x="120" y="132">Biometano (biogás)</text><text x="290" y="132">50</text><text x="410" y="132">≈ 10</text>
+ <rect x="30" y="144" width="440" height="34" fill="#fff" stroke="#eef1f4"/><text x="120" y="166">Hidrogênio verde</text><text x="290" y="166">120</text><text x="410" y="166">≈ 0</text>
+ <rect x="30" y="178" width="440" height="34" fill="#eef1f4"/><text x="120" y="200">Carvão mineral</text><text x="290" y="200">24</text><text x="410" y="200">≈ 95</text></g>
+ <text x="30" y="240" font-size="11" fill="#444">* Emissão líquida estimada, considerando todo o ciclo do combustível.</text>
+ <text x="30" y="256" font-size="11" fill="#444">Valores aproximados, apresentados para fins didáticos.</text>
+ <text x="30" y="276" font-size="11" fill="#444">Obs.: o hidrogênio ocupa grande volume por grama, o que exige tanques pressurizados.</text>`)
+};
+const LEG = {1:"Figura 1 – Entalpia na combustão do etanol",2:"Figura 2 – Temperatura da bolsa ao ser acionada",3:"Figura 3 – Concentração × tempo",4:"Figura 4 – Poder calorífico de combustíveis",5:"Figura 5 – Efeito das condições na dissolução",6:"Figura 6 – Etapas da formação do CO₂",7:"Figura 7 – Energias de ligação",8:"Figura 8 – Conservação do leite",9:"Figura 9 – Perfil de energia da reação no escapamento",10:"Figura 10 – Dados comparativos de combustíveis"};
+ 
+/* ====== QUESTÕES (o gabarito NÃO está aqui: a correção é feita no Apps Script) ====== */
+const Q = [
+{t:"o",e:"Em fogões a gás e a álcool, a combustão do etanol aquece alimentos. O diagrama de entalpia (Figura 1) representa essa reação. Com base nele, classifique a combustão do etanol.",
+ a:["Endotérmica, pois o ΔH é positivo e a reação absorve energia do ambiente.","Exotérmica, pois os produtos têm entalpia menor que a dos reagentes (ΔH < 0) e a reação libera energia.","Endotérmica, pois é preciso uma chama para iniciar a reação.","Exotérmica, pois o ΔH é positivo e a energia é liberada na forma de calor.","Nem endotérmica nem exotérmica, pois a energia total se conserva."]},
+{t:"o",e:"As bolsas instantâneas de gelo, usadas em lesões esportivas, contêm água e nitrato de amônio em compartimentos separados. Ao serem rompidas, a temperatura varia como mostra a Figura 2. Qual alternativa classifica corretamente o processo?",
+ a:["Exotérmico: libera calor para o ambiente e o ΔH é negativo.","Exotérmico: o ΔH é positivo porque a temperatura diminui.","Endotérmico: o ΔH é negativo porque o sistema esfria.","Endotérmico: absorve calor do ambiente (e da região machucada) e o ΔH é positivo.","Isotérmico: não há troca de calor entre a bolsa e o ambiente."]},
+{t:"o",e:"Em um laboratório escolar, acompanhou-se a transformação A → B. A Figura 3 mostra a variação das concentrações de A e de B ao longo do tempo. Qual alternativa interpreta corretamente o gráfico?",
+ a:["A curva 1 representa o reagente (A), que é consumido, e a curva 2 representa o produto (B); a reação termina em 6 min.","A curva 1 representa o produto (B) e a curva 2 representa o reagente (A); a reação termina em 6 min.","A curva 1 representa o reagente e a curva 2 o produto; a reação termina em 3 min, quando as curvas se cruzam.","As duas curvas representam reagentes, pois ambas variam com o tempo.","A curva 1 representa o reagente e a reação não termina, pois a concentração de B continua aumentando."]},
+{t:"o",e:"Um fogão precisa liberar 2 300 kJ para cozinhar uma refeição. Usando os dados da Figura 4, qual massa de gasolina, queimada completamente, libera essa quantidade de energia?",
+ a:["100 g","25 g","50 g","2,0 g","105,8 g"]},
+{t:"o",e:"Em um experimento sobre rapidez de reações, três comprimidos efervescentes foram dissolvidos em água sob condições diferentes (Figura 5). Para explicar por que o experimento B é mais rápido que o A, deve-se considerar que:",
+ a:["em B a temperatura é maior, o que aumenta a energia cinética das moléculas.","em B a concentração de água é menor, o que favorece as colisões.","em B há catalisador, que diminui a energia de ativação.","em B o volume de água é menor, o que torna a reação endotérmica.","em B o comprimido triturado tem maior superfície de contato, o que aumenta o número de colisões efetivas."]},
+{t:"o",e:"O carbono grafite pode queimar produzindo CO₂ diretamente ou passando antes por CO (combustão incompleta, em locais mal ventilados). Usando os dados da Figura 6 e a Lei de Hess, calcule o ΔH₃ da reação C(grafite) + ½ O₂(g) → CO(g).",
+ a:["−677 kJ","−111 kJ","+111 kJ","+677 kJ","−394 kJ"]},
+{t:"o",e:"O gás clorídrico (HCl) é produzido industrialmente e usado, por exemplo, na limpeza de metais. Usando as energias de ligação da Figura 7, estime o ΔH da reação H₂(g) + Cl₂(g) → 2 HCl(g).",
+ a:["−183 kJ (exotérmica)","+183 kJ (endotérmica)","−862 kJ (exotérmica)","+679 kJ (endotérmica)","+1 541 kJ (endotérmica)"]},
+{t:"d",e:"Segundo a Figura 8, o leite dura cerca de 7 dias na geladeira, mas estraga em cerca de 1 dia à temperatura ambiente. Explique, usando a Teoria das Colisões e o conceito de rapidez de reação, por que a refrigeração conserva melhor os alimentos.",
+ k:"Conceitos esperados: (1) menor temperatura → menor energia cinética das partículas; (2) menos colisões efetivas (energia ≥ Ea); (3) reações de deterioração mais lentas."},
+{t:"d",e:"Os catalisadores automotivos transformam o CO (tóxico) em CO₂ no escapamento. A Figura 9 mostra o perfil de energia da reação com e sem catalisador. Explique o que o catalisador altera e o que ele não altera nessa reação, e por que isso é vantajoso.",
+ k:"Conceitos esperados: (1) diminui a energia de ativação / novo caminho; (2) não altera ΔH nem o rendimento final; (3) aumenta a rapidez, tornando o CO convertido a tempo na exaustão."},
+{t:"d",e:"Uma cidade quer escolher um combustível para sua frota de ônibus com foco em desempenho energético e sustentabilidade. Analisando a Figura 10, proponha um combustível e justifique sua escolha com dados, indicando também uma limitação do combustível escolhido.",
+ k:"Conceitos esperados: (1) compara kJ/g e emissão de CO₂/MJ com dados da tabela; (2) conclusão coerente (ex.: biometano/etanol/hidrogênio); (3) cita limitação (armazenamento, menor energia por grama, custo, uso do solo)."}
+];
+ 
+/* ====== LÓGICA ====== */
+const $ = id => document.getElementById(id);
+const resp = {};          // {1:"B", 2:"D", ..., 8:"texto"}
+const L = ["A","B","C","D","E"];
+ 
+function montar(){
+  const box = $("questoes");
+  Q.forEach((q,i)=>{
+    const n=i+1, s=document.createElement("section");
+    s.className="card q";
+    let h=`<h2>Questão ${n}<span class="tipo">${q.t==="o"?"Objetiva":"Dissertativa"}</span></h2><p class="enun">${q.e}</p>
+      <figure>${FIG[n]}<figcaption>${LEG[n]}</figcaption></figure>`;
+    if(q.t==="o"){
+      h+=`<div role="radiogroup" aria-label="Alternativas da questão ${n}">`+q.a.map((t,j)=>
+        `<div class="alt" role="radio" aria-checked="false" tabindex="0" data-q="${n}" data-l="${L[j]}"><span class="letra">${L[j]})</span><span>${t}</span></div>`).join("")+`</div>`;
+    } else {
+      h+=`<textarea data-d="${n}" placeholder="Escreva sua resposta aqui…"></textarea><div class="rubrica">Resposta avaliada pelo professor (0 a 1,0).</div>`;
+    }
+    s.innerHTML=h; box.appendChild(s);
+  });
+  box.addEventListener("click",e=>{const a=e.target.closest(".alt"); if(a) marcar(a);});
+  box.addEventListener("keydown",e=>{ if((e.key===" "||e.key==="Enter")&&e.target.classList.contains("alt")){e.preventDefault();marcar(e.target);} });
+  box.addEventListener("input",e=>{ if(e.target.dataset.d){resp[e.target.dataset.d]=e.target.value.trim();contar();} });
+}
+function marcar(a){
+  const n=a.dataset.q;
+  document.querySelectorAll(`.alt[data-q="${n}"]`).forEach(x=>{x.classList.remove("selecionada");x.setAttribute("aria-checked","false");});
+  a.classList.add("selecionada");a.setAttribute("aria-checked","true");
+  resp[n]=a.dataset.l; contar();
+}
+function contar(){ $("cont").textContent = Object.values(resp).filter(v=>v).length; }
+ 
+/* Cabeçalho em cascata: Turma → Nome → Nº, RA, e-mail */
+Object.keys(TURMAS).forEach(t=>{const o=document.createElement("option");o.value=o.textContent=t;$("turma").appendChild(o);});
+$("turma").addEventListener("change",()=>{
+  const n=$("nome"); n.innerHTML=""; limpar();
+  const lista=TURMAS[$("turma").value];
+  if(!lista){n.disabled=true;n.innerHTML='<option value="">Selecione primeiro a turma…</option>';return;}
+  n.disabled=false; n.innerHTML='<option value="">Selecione seu nome…</option>';
+  lista.forEach((a,i)=>{const o=document.createElement("option");o.value=i;o.textContent=a.nome;n.appendChild(o);});
+});
+$("nome").addEventListener("change",()=>{
+  const a=(TURMAS[$("turma").value]||[])[$("nome").value];
+  if(!a){limpar();return;}
+  $("num").value=a.n; $("ra").value=a.ra+"-"+a.dig; $("email").value=a.email;
+});
+function limpar(){["num","ra","email"].forEach(i=>$(i).value="");}
+ 
+/* Envio ao Google Sheets via Apps Script */
+$("btn").addEventListener("click",async()=>{
+  const m=$("msg"); m.className="";
+  if(!$("turma").value||$("nome").value===""){m.className="erro";m.textContent="Selecione sua turma e seu nome antes de enviar.";return;}
+  const faltam=[]; for(let i=1;i<=10;i++){ if(!resp[i]) faltam.push(i); }
+  if(faltam.length && !confirm("Você não respondeu a(s) questão(ões): "+faltam.join(", ")+". Deseja enviar mesmo assim?")) return;
+  const a=TURMAS[$("turma").value][$("nome").value];
+  const dados={turma:$("turma").value,nome:a.nome,numero:a.n,ra:a.ra+"-"+a.dig,email:a.email,respostas:resp,enviadoEm:new Date().toISOString()};
+  if(URL_APPS_SCRIPT.startsWith("COLE_AQUI")){m.className="erro";m.textContent="Atividade ainda não conectada à planilha (URL do Apps Script não configurada). Avise o professor.";return;}
+  $("btn").disabled=true; $("btn").textContent="Enviando…";
+  try{
+    await fetch(URL_APPS_SCRIPT,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(dados)});
+    m.className="ok"; m.textContent="✔ Respostas enviadas com sucesso! Você já pode fechar esta página.";
+    $("btn").textContent="ENVIADO";
+  }catch(err){
+    m.className="erro"; m.textContent="Falha no envio. Verifique a internet e tente novamente.";
+    $("btn").disabled=false; $("btn").textContent="ENVIAR RESPOSTAS";
+  }
+});
+montar();
+</script>
+</body>
+</html>
+ 
